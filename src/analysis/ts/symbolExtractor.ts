@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as ts from 'typescript';
 import { CodeNode, CodeNodeKind } from '../../contracts/nodes';
 import { makeNodeId } from '../normalize/nodeIds';
@@ -65,6 +66,7 @@ export function extractNodes(program: ts.Program, workspaceRoot: string): CodeNo
 
     const sfStart = sourceFile.getLineAndCharacterOfPosition(0);
     const sfEnd = sourceFile.getLineAndCharacterOfPosition(sourceFile.getEnd());
+    const isTestFile = /(?:^|\/)(?:__tests__\/.*|.*(?:test|spec))\.(?:ts|tsx)$/.test(sourceFile.fileName.replace(/\\/g, '/'));
     nodes.push({
       id: makeNodeId(workspaceRoot, sourceFile.fileName, 'file', sourceFile.fileName, {
         startLine: sfStart.line + 1,
@@ -81,6 +83,26 @@ export function extractNodes(program: ts.Program, workspaceRoot: string): CodeNo
       spanEndCol: sfEnd.character + 1,
       responsibility: 'unknown'
     });
+
+
+    if (isTestFile) {
+      nodes.push({
+        id: makeNodeId(workspaceRoot, sourceFile.fileName, 'test', sourceFile.fileName, {
+          startLine: sfStart.line + 1,
+          startCol: sfStart.character + 1,
+          endLine: sfEnd.line + 1,
+          endCol: sfEnd.character + 1
+        }),
+        kind: 'test',
+        name: path.basename(sourceFile.fileName),
+        filePath: sourceFile.fileName,
+        spanStartLine: sfStart.line + 1,
+        spanStartCol: sfStart.character + 1,
+        spanEndLine: sfEnd.line + 1,
+        spanEndCol: sfEnd.character + 1,
+        responsibility: 'unknown'
+      });
+    }
 
     visit(sourceFile);
   }

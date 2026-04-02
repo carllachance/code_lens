@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "publisher": "local",
   "engines": {
-    "vscode": "^1.92.0"
+    "vscode": "1.92.0"
   },
   "categories": [
     "Other"
@@ -55,7 +55,7 @@
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.16.0",
-    "@types/vscode": "^1.92.0",
+    "@types/vscode": "1.92.0",
     "typescript": "^5.6.3"
   },
   "dependencies": {

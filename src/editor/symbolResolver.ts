@@ -31,7 +31,7 @@ export async function resolveSymbolAtSelection(editor: vscode.TextEditor): Promi
   if (!selected) return undefined;
 
   const nodeKind = toNodeKind(selected.kind, selected.name);
-  const range = selected.selectionRange;
+  const range = selected.range;
   const id = makeNodeId(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '', editor.document.uri.fsPath, nodeKind, selected.name, {
     startLine: range.start.line + 1,
     startCol: range.start.character + 1,
