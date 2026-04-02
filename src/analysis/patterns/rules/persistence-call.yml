@@ -1,0 +1,4 @@
+id: persistence-call
+language: TypeScript
+rule:
+  kind: identifier

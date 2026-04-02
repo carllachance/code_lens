@@ -1,0 +1,4 @@
+id: effect-state-dependency
+language: TypeScript
+rule:
+  kind: identifier
