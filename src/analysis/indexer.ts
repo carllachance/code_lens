@@ -4,6 +4,8 @@ import { extractImportEdges } from './ts/importExtractor';
 import { ProgramManager } from './ts/programManager';
 import { extractReferenceEdges } from './ts/referenceExtractor';
 import { extractNodes } from './ts/symbolExtractor';
+import { extractJsxRenderEdges } from './ts/jsxComponentExtractor';
+import { extractTestEdges } from './ts/testLinkExtractor';
 import { GraphDatabase } from '../graph/sqlite';
 import { EdgesRepo } from '../graph/repositories/edgesRepo';
 import { NodesRepo } from '../graph/repositories/nodesRepo';
@@ -25,8 +27,14 @@ export class Indexer {
     const nodes = extractNodes(program, this.workspaceRoot);
     nodes.forEach((n) => nodesRepo.upsert(n));
 
-    progress?.report({ message: 'Extracting imports/calls/references...', increment: 40 });
-    const edges = [...extractImportEdges(program), ...extractCallEdges(program), ...extractReferenceEdges(program)];
+    progress?.report({ message: 'Extracting imports/calls/references/renders/tests...', increment: 40 });
+    const edges = [
+      ...extractImportEdges(program),
+      ...extractCallEdges(program),
+      ...extractReferenceEdges(program),
+      ...extractJsxRenderEdges(program, this.workspaceRoot),
+      ...extractTestEdges(program, this.workspaceRoot)
+    ];
     edges.forEach((e) => edgesRepo.upsert(e));
 
     progress?.report({ message: `Indexed ${nodes.length} nodes and ${edges.length} edges.`, increment: 40 });

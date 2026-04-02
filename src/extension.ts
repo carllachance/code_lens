@@ -16,11 +16,14 @@ import { generateGroundedSummary } from './explain/summaryGenerator';
 import { getNodeFocus } from './queries/getNodeFocus';
 import { LensPanel } from './webview/panel';
 
+let activeGraph: GraphDatabase | undefined;
+
 export function activate(context: vscode.ExtensionContext): void {
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (!workspaceRoot) return;
 
   const graph = new GraphDatabase(context);
+  activeGraph = graph;
   const programManager = new ProgramManager(workspaceRoot);
   const indexer = new Indexer(workspaceRoot, programManager, graph);
 
@@ -81,5 +84,6 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {
-  // no-op
+  activeGraph?.close();
+  activeGraph = undefined;
 }
