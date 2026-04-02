@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import { extractCallEdges } from './ts/callEdgeExtractor';
 import { extractImportEdges } from './ts/importExtractor';
 import { ProgramManager } from './ts/programManager';
@@ -11,6 +10,10 @@ import { EdgesRepo } from '../graph/repositories/edgesRepo';
 import { NodesRepo } from '../graph/repositories/nodesRepo';
 import { logger } from '../util/logger';
 
+export type IndexProgressReporter = {
+  report(update: { message?: string; increment?: number }): void;
+};
+
 export class Indexer {
   constructor(
     private readonly workspaceRoot: string,
@@ -18,7 +21,7 @@ export class Indexer {
     private readonly graph: GraphDatabase
   ) {}
 
-  async indexWorkspace(progress?: vscode.Progress<{ message?: string; increment?: number }>): Promise<void> {
+  async indexWorkspace(progress?: IndexProgressReporter): Promise<void> {
     const nodesRepo = new NodesRepo(this.graph);
     const edgesRepo = new EdgesRepo(this.graph);
     const program = this.programManager.getProgram();

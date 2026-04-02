@@ -9,7 +9,14 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
+    "types": ["node", "electron"],
     "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/extension.ts",
+    "src/commands/**/*",
+    "src/editor/**/*",
+    "src/webview/**/*"
+  ]
 }

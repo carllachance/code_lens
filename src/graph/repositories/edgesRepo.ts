@@ -5,6 +5,13 @@ export class EdgesRepo {
   constructor(private readonly graph: GraphDatabase) {}
 
   upsert(edge: CodeEdge): void {
+    const record = {
+      ...edge,
+      detail: edge.detail ?? null,
+      sourceStartLine: edge.sourceStartLine ?? null,
+      sourceEndLine: edge.sourceEndLine ?? null
+    };
+
     this.graph.raw().prepare(
       `INSERT INTO edges (id, from_node_id, to_node_id, edge_type, evidence, detail, source_file_path, source_start_line, source_end_line, updated_at)
        VALUES (@id, @fromNodeId, @toNodeId, @edgeType, @evidence, @detail, @sourceFilePath, @sourceStartLine, @sourceEndLine, datetime('now'))
@@ -18,7 +25,7 @@ export class EdgesRepo {
          source_start_line = excluded.source_start_line,
          source_end_line = excluded.source_end_line,
          updated_at = datetime('now')`
-    ).run(edge);
+    ).run(record);
   }
 
   incoming(nodeId: string): CodeEdge[] {

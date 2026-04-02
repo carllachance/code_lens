@@ -3,9 +3,13 @@ import { NodeFocus } from '../contracts/lens';
 import { enforceGuardrails } from './guardrails';
 
 export async function generateGroundedSummary(focus: NodeFocus): Promise<LensExplanation> {
+  const boundaryText = focus.boundaryFlags.length
+    ? ` It touches ${focus.boundaryFlags.join(', ')}.`
+    : '';
   const summary = enforceGuardrails(
-    `${focus.node.name} is a ${focus.node.kind} in ${focus.node.filePath}. It has ${focus.incoming.length} incoming and ${focus.outgoing.length} outgoing relationships. ` +
-      `Exact static facts come from compiler extraction; some relationship links are structural inference.`
+    `${focus.node.name} is a ${focus.node.kind} in ${focus.node.filePath}. ` +
+      `It currently shows ${focus.incoming.length} incoming links and ${focus.outgoing.length} outgoing links in this code graph.` +
+      boundaryText
   );
 
   return {
