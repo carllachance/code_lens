@@ -1,0 +1,4 @@
+id: async-network-boundary
+language: TypeScript
+rule:
+  kind: identifier

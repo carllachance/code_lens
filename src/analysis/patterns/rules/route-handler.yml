@@ -1,0 +1,4 @@
+id: route-handler
+language: TypeScript
+rule:
+  kind: identifier

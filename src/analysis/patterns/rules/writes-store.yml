@@ -1,0 +1,4 @@
+id: writes-store
+language: TypeScript
+rule:
+  kind: identifier

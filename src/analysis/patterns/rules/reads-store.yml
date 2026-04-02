@@ -1,0 +1,4 @@
+id: reads-store
+language: TypeScript
+rule:
+  kind: identifier

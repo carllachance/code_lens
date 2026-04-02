@@ -1,0 +1,64 @@
+{
+  "name": "code-lens-v1",
+  "displayName": "Code Lens v1",
+  "description": "Graph-backed symbol lens for TypeScript/React repos",
+  "version": "0.0.1",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact",
+    "onCommand:codeLens.openPanel"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codeLens.openPanel",
+        "title": "Code Lens: Open Panel"
+      },
+      {
+        "command": "codeLens.refreshIndex",
+        "title": "Code Lens: Refresh Index"
+      },
+      {
+        "command": "codeLens.reindexCurrentFile",
+        "title": "Code Lens: Reindex Current File"
+      },
+      {
+        "command": "codeLens.traceOutward",
+        "title": "Code Lens: Trace Outward"
+      },
+      {
+        "command": "codeLens.traceInward",
+        "title": "Code Lens: Trace Inward"
+      },
+      {
+        "command": "codeLens.showNeighborhood",
+        "title": "Code Lens: Show Neighborhood"
+      },
+      {
+        "command": "codeLens.toggleEvidenceFilter",
+        "title": "Code Lens: Toggle Evidence Filter"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "check": "tsc -p . --noEmit"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20.16.0",
+    "@types/vscode": "^1.92.0",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0"
+  }
+}

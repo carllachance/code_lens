@@ -1,0 +1,4 @@
+id: uses-hook
+language: TypeScript
+rule:
+  kind: identifier
