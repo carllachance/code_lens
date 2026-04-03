@@ -6,8 +6,8 @@
   "scripts": {
     "build": "tsc -p .",
     "check": "tsc -p . --noEmit",
-    "start": "electron .",
-    "start:web": "node out/app/server.js"
+    "start": "npm run build && electron .",
+    "start:web": "npm run build && node out/app/server.js"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

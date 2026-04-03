@@ -2,11 +2,12 @@ import * as crypto from 'crypto';
 import * as ts from 'typescript';
 import { CodeEdge } from '../../contracts/edges';
 
-export function extractImportEdges(program: ts.Program): CodeEdge[] {
+export function extractImportEdges(program: ts.Program, targetFiles?: ReadonlySet<string>): CodeEdge[] {
   const edges: CodeEdge[] = [];
 
   for (const sf of program.getSourceFiles()) {
     if (!/\.(ts|tsx)$/.test(sf.fileName) || sf.isDeclarationFile) continue;
+    if (targetFiles && !targetFiles.has(sf.fileName)) continue;
     sf.forEachChild((node) => {
       if (!ts.isImportDeclaration(node) || !ts.isStringLiteral(node.moduleSpecifier)) return;
       const target = node.moduleSpecifier.text;

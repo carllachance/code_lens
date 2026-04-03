@@ -65,7 +65,9 @@ export async function startCodeLensServer(options?: {
           return;
         }
 
+        logger.info('Folder picker requested over HTTP fallback');
         const folderPath = await pickFolder();
+        logger.info('Folder picker resolved over HTTP fallback', { folderPath: folderPath ?? null });
         sendJson(response, 200, { folderPath });
         return;
       }

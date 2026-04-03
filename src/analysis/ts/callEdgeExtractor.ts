@@ -2,11 +2,12 @@ import * as crypto from 'crypto';
 import * as ts from 'typescript';
 import { CodeEdge } from '../../contracts/edges';
 
-export function extractCallEdges(program: ts.Program): CodeEdge[] {
+export function extractCallEdges(program: ts.Program, targetFiles?: ReadonlySet<string>): CodeEdge[] {
   const edges: CodeEdge[] = [];
 
   for (const sf of program.getSourceFiles()) {
     if (!/\.(ts|tsx)$/.test(sf.fileName) || sf.isDeclarationFile) continue;
+    if (targetFiles && !targetFiles.has(sf.fileName)) continue;
     const visit = (node: ts.Node): void => {
       if (ts.isCallExpression(node)) {
         const expr = node.expression.getText(sf);

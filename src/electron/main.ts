@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { startCodeLensServer, CodeLensServer } from '../app/server';
+import { logger } from '../util/logger';
 
 let mainWindow: BrowserWindow | undefined;
 let server: CodeLensServer | undefined;
@@ -49,6 +50,7 @@ async function createMainWindow(): Promise<void> {
 }
 
 ipcMain.handle('code-lens:choose-folder', async () => {
+  logger.info('Folder picker requested over IPC');
   const owner = mainWindow ?? BrowserWindow.getFocusedWindow() ?? undefined;
   const result = owner
     ? await dialog.showOpenDialog(owner, {
@@ -61,9 +63,11 @@ ipcMain.handle('code-lens:choose-folder', async () => {
       });
 
   if (result.canceled || result.filePaths.length === 0) {
+    logger.info('Folder picker canceled over IPC');
     return undefined;
   }
 
+  logger.info('Folder picker resolved over IPC', { folderPath: result.filePaths[0] });
   return result.filePaths[0];
 });
 

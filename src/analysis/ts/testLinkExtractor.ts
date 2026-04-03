@@ -17,11 +17,16 @@ function resolveImportToFile(fromFilePath: string, importPath: string): string |
   return candidates.find((candidate) => fs.existsSync(candidate));
 }
 
-export function extractTestEdges(program: ts.Program, workspaceRoot: string): CodeEdge[] {
+export function extractTestEdges(
+  program: ts.Program,
+  workspaceRoot: string,
+  targetFiles?: ReadonlySet<string>
+): CodeEdge[] {
   const edges: CodeEdge[] = [];
 
   for (const sf of program.getSourceFiles()) {
     if (!/\.(ts|tsx)$/.test(sf.fileName) || sf.isDeclarationFile) continue;
+    if (targetFiles && !targetFiles.has(sf.fileName)) continue;
     const normalizedPath = sf.fileName.replace(/\\/g, '/');
     const isTestFile = /(?:^|\/)(?:__tests__\/.*|.*(?:test|spec))\.(?:ts|tsx)$/.test(normalizedPath);
     if (!isTestFile) continue;

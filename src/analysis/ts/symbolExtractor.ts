@@ -4,13 +4,14 @@ import { CodeNode, CodeNodeKind } from '../../contracts/nodes';
 import { makeNodeId } from '../normalize/nodeIds';
 import { classifyResponsibility } from './responsibilityClassifier';
 
-export function extractNodes(program: ts.Program, workspaceRoot: string): CodeNode[] {
+export function extractNodes(program: ts.Program, workspaceRoot: string, targetFiles?: ReadonlySet<string>): CodeNode[] {
   const nodes: CodeNode[] = [];
 
   const checker = program.getTypeChecker();
   for (const sourceFile of program.getSourceFiles()) {
     if (sourceFile.isDeclarationFile) continue;
     if (!/\.(ts|tsx)$/.test(sourceFile.fileName)) continue;
+    if (targetFiles && !targetFiles.has(sourceFile.fileName)) continue;
 
     const pushNode = (kind: CodeNodeKind, name: string, n: ts.Node): void => {
       const start = sourceFile.getLineAndCharacterOfPosition(n.getStart(sourceFile));
@@ -39,7 +40,11 @@ export function extractNodes(program: ts.Program, workspaceRoot: string): CodeNo
     const visit = (n: ts.Node): void => {
       if (ts.isFunctionDeclaration(n) && n.name) {
         const nm = n.name.getText(sourceFile);
-        const kind: CodeNodeKind = nm.startsWith('use') ? 'hook' : 'function';
+        const kind: CodeNodeKind = nm.startsWith('use')
+          ? 'hook'
+          : /^[A-Z]/.test(nm) && functionLooksLikeComponent(n, sourceFile)
+            ? 'component'
+            : 'function';
         pushNode(kind, nm, n);
       }
       if (ts.isClassDeclaration(n) && n.name) {
@@ -55,9 +60,22 @@ export function extractNodes(program: ts.Program, workspaceRoot: string): CodeNo
         n.declarationList.declarations.forEach((d) => {
           if (!ts.isIdentifier(d.name)) return;
           const nm = d.name.text;
-          const initializerText = d.initializer?.getText(sourceFile) ?? '';
+          const initializer = d.initializer;
+          const initializerText = initializer?.getText(sourceFile) ?? '';
           const isJsxish = /<\w+/.test(initializerText);
-          const kind: CodeNodeKind = nm.startsWith('use') ? 'hook' : isJsxish || /^[A-Z]/.test(nm) ? 'component' : 'function';
+          const isCallableInitializer = Boolean(
+            initializer && (ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer))
+          );
+          const isAllCaps = /^[A-Z0-9_]+$/.test(nm);
+          const kind: CodeNodeKind = nm.startsWith('use')
+            ? 'hook'
+            : isJsxish
+              ? 'component'
+              : isCallableInitializer
+                ? 'function'
+                : isAllCaps
+                  ? 'constant'
+                  : 'function';
           pushNode(kind, nm, d);
         });
       }
@@ -108,4 +126,9 @@ export function extractNodes(program: ts.Program, workspaceRoot: string): CodeNo
   }
 
   return nodes;
+}
+
+function functionLooksLikeComponent(node: ts.FunctionDeclaration, sourceFile: ts.SourceFile): boolean {
+  const text = node.getText(sourceFile);
+  return /return\s*\(\s*</.test(text) || /return\s*</.test(text);
 }
