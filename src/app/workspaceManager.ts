@@ -8,6 +8,7 @@ import { generateGroundedSummary } from '../explain/summaryGenerator';
 import { GraphDatabase } from '../graph/sqlite';
 import { EdgesRepo } from '../graph/repositories/edgesRepo';
 import { ExplanationsRepo } from '../graph/repositories/explanationsRepo';
+import { FilesRepo } from '../graph/repositories/filesRepo';
 import { NodesRepo } from '../graph/repositories/nodesRepo';
 import { TracesRepo } from '../graph/repositories/tracesRepo';
 import { getNodeFocus } from '../queries/getNodeFocus';
@@ -30,6 +31,7 @@ type WorkspaceSession = {
   edges: EdgesRepo;
   explanations: ExplanationsRepo;
   traces: TracesRepo;
+  files: FilesRepo;
   lastIndexedAt?: string;
   lastIndexMessage?: string;
 };
@@ -58,6 +60,7 @@ export class WorkspaceManager {
     const edges = new EdgesRepo(graph);
     const explanations = new ExplanationsRepo(graph);
     const traces = new TracesRepo(edges);
+    const files = new FilesRepo(graph);
 
     const session: WorkspaceSession = {
       id,
@@ -67,7 +70,9 @@ export class WorkspaceManager {
       nodes,
       edges,
       explanations,
-      traces
+      traces,
+      files,
+      lastIndexedAt: files.getLastIndexedAt()
     };
 
     this.sessions.set(normalizedPath, session);
@@ -83,7 +88,7 @@ export class WorkspaceManager {
     };
 
     await session.indexer.indexWorkspace(progress);
-    session.lastIndexedAt = new Date().toISOString();
+    session.lastIndexedAt = session.files.getLastIndexedAt() ?? new Date().toISOString();
     return this.toSummary(session);
   }
 
@@ -103,7 +108,7 @@ export class WorkspaceManager {
       return undefined;
     }
 
-    if (!focus.explanation) {
+    if (!focus.explanation || focus.explanation.summary.includes('undefined')) {
       const explanation = await generateGroundedSummary(focus);
       session.explanations.upsert(explanation);
       return { ...focus, explanation };

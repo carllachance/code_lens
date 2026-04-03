@@ -29,10 +29,40 @@ export class EdgesRepo {
   }
 
   incoming(nodeId: string): CodeEdge[] {
-    return this.graph.raw().prepare('SELECT * FROM edges WHERE to_node_id = ?').all(nodeId) as CodeEdge[];
+    return (this.graph
+      .raw()
+      .prepare(this.selectEdgesSql('WHERE to_node_id = ?'))
+      .all(nodeId) as Record<string, unknown>[])
+      .map((row) => this.mapEdge(row));
   }
 
   outgoing(nodeId: string): CodeEdge[] {
-    return this.graph.raw().prepare('SELECT * FROM edges WHERE from_node_id = ?').all(nodeId) as CodeEdge[];
+    return (this.graph
+      .raw()
+      .prepare(this.selectEdgesSql('WHERE from_node_id = ?'))
+      .all(nodeId) as Record<string, unknown>[])
+      .map((row) => this.mapEdge(row));
+  }
+
+  deleteBySourceFilePath(filePath: string): void {
+    this.graph.raw().prepare('DELETE FROM edges WHERE source_file_path = ?').run(filePath);
+  }
+
+  private selectEdgesSql(whereClause = ''): string {
+    return `SELECT
+      id,
+      from_node_id AS fromNodeId,
+      to_node_id AS toNodeId,
+      edge_type AS edgeType,
+      evidence,
+      detail,
+      source_file_path AS sourceFilePath,
+      source_start_line AS sourceStartLine,
+      source_end_line AS sourceEndLine
+    FROM edges ${whereClause}`;
+  }
+
+  private mapEdge(row: Record<string, unknown>): CodeEdge {
+    return row as unknown as CodeEdge;
   }
 }

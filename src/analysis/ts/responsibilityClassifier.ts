@@ -4,6 +4,9 @@ export function classifyResponsibility(
   kind: CodeNodeKind,
   text: string
 ): { responsibility: ResponsibilityKind; reason: string } {
+  if (kind === 'constant') {
+    return { responsibility: 'utility', reason: 'Stores a shared constant or pattern.' };
+  }
   if (kind === 'component' || /<\w+/.test(text)) {
     return { responsibility: 'presentation', reason: 'Returns or contains JSX.' };
   }

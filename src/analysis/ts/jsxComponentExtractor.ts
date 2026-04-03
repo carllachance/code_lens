@@ -3,11 +3,16 @@ import * as ts from 'typescript';
 import { CodeEdge } from '../../contracts/edges';
 import { makeFileNodeId, makeNodeId } from '../normalize/nodeIds';
 
-export function extractJsxRenderEdges(program: ts.Program, workspaceRoot: string): CodeEdge[] {
+export function extractJsxRenderEdges(
+  program: ts.Program,
+  workspaceRoot: string,
+  targetFiles?: ReadonlySet<string>
+): CodeEdge[] {
   const edges: CodeEdge[] = [];
 
   for (const sf of program.getSourceFiles()) {
     if (!/\.(ts|tsx)$/.test(sf.fileName) || sf.isDeclarationFile) continue;
+    if (targetFiles && !targetFiles.has(sf.fileName)) continue;
 
     const visit = (node: ts.Node, currentOwnerId: string): void => {
       let ownerId = currentOwnerId;
@@ -15,7 +20,8 @@ export function extractJsxRenderEdges(program: ts.Program, workspaceRoot: string
       if (ts.isFunctionDeclaration(node) && node.name) {
         const start = sf.getLineAndCharacterOfPosition(node.getStart(sf));
         const end = sf.getLineAndCharacterOfPosition(node.getEnd());
-        ownerId = makeNodeId(workspaceRoot, sf.fileName, 'function', node.name.text, {
+        const ownerKind = /^[A-Z]/.test(node.name.text) && /return\s*\(\s*</.test(node.getText(sf)) ? 'component' : 'function';
+        ownerId = makeNodeId(workspaceRoot, sf.fileName, ownerKind, node.name.text, {
           startLine: start.line + 1,
           startCol: start.character + 1,
           endLine: end.line + 1,

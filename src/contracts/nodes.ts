@@ -1,6 +1,7 @@
 export type CodeNodeKind =
   | 'file'
   | 'module'
+  | 'constant'
   | 'function'
   | 'component'
   | 'hook'
@@ -34,4 +35,11 @@ export type CodeNode = {
   spanEndLine: number;
   spanEndCol: number;
   responsibility: ResponsibilityKind;
+};
+
+export type NodeListItem = CodeNode & {
+  incomingCount: number;
+  outgoingCount: number;
+  centralityScore: number;
+  complexityLabel: string;
 };
