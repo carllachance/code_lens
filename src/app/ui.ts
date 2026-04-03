@@ -90,6 +90,12 @@ export function renderAppHtml(): string {
       .simple-callout, .empty { color: var(--muted); }
       .loading-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(249, 245, 238, 0.74); opacity: 0; pointer-events: none; transition: opacity 180ms ease; }
       .loading-overlay.active { opacity: 1; pointer-events: auto; }
+      .qa-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-top: 10px; }
+      .qa-input { width: 100%; }
+      .qa-answer { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(15, 118, 110, 0.06); border: 1px solid rgba(15, 118, 110, 0.2); }
+      .qa-answer h3 { margin: 0 0 8px; font-size: 1rem; }
+      .qa-answer ol, .qa-answer ul { margin: 8px 0 0 18px; padding: 0; }
+      .qa-meta { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
       .loading-card { min-width: 260px; max-width: 360px; padding: 18px 20px; border-radius: 18px; background: rgba(255, 253, 248, 0.96); border: 1px solid var(--line); text-align: center; }
       .spinner { width: 42px; height: 42px; margin: 0 auto 12px; border-radius: 999px; border: 4px solid rgba(15, 118, 110, 0.16); border-top-color: var(--accent); animation: spin 780ms linear infinite; }
       @keyframes spin { to { transform: rotate(360deg); } }
@@ -168,6 +174,11 @@ export function renderAppHtml(): string {
           <div class="detail-header">
             <h2 id="detail-title">Workspace detail</h2>
             <p id="detail-subtitle" class="status">Select a file member to see a simple explanation.</p>
+            <div class="qa-bar">
+              <input id="question-input" class="qa-input" placeholder="Ask anything, e.g. What happens when I save a note?" />
+              <button id="ask-button" type="button" class="secondary">Ask</button>
+            </div>
+            <div id="qa-answer" class="qa-answer hidden"></div>
           </div>
           <div id="detail-body" class="detail-body">
             <div class="panel wide empty">No symbol selected yet.</div>
@@ -176,7 +187,7 @@ export function renderAppHtml(): string {
       </section>
     </div>
     <script>
-      const state = { workspacePath: '', nodes: [], activeNodeId: '', focus: null, viewMode: 'simple', expandedFiles: {}, lastOutwardTrace: [], lastInwardTrace: [] };
+      const state = { workspacePath: '', nodes: [], activeNodeId: '', focus: null, viewMode: 'simple', expandedFiles: {}, lastOutwardTrace: [], lastInwardTrace: [], questionAnswer: null };
       const els = {
         form: document.getElementById('workspace-form'), folderPath: document.getElementById('folder-path'), chooseFolderButton: document.getElementById('choose-folder-button'),
         openButton: document.getElementById('open-button'), reindexButton: document.getElementById('reindex-button'), workspaceStatus: document.getElementById('workspace-status'),
@@ -185,7 +196,8 @@ export function renderAppHtml(): string {
         simpleGuide: document.getElementById('simple-guide'),
         detailTitle: document.getElementById('detail-title'), detailSubtitle: document.getElementById('detail-subtitle'), detailBody: document.getElementById('detail-body'),
         banner: document.getElementById('banner'), loadingOverlay: document.getElementById('loading-overlay'), loadingTitle: document.getElementById('loading-title'),
-        loadingCopy: document.getElementById('loading-copy'), simpleViewButton: document.getElementById('simple-view-button'), graphViewButton: document.getElementById('graph-view-button')
+        loadingCopy: document.getElementById('loading-copy'), simpleViewButton: document.getElementById('simple-view-button'), graphViewButton: document.getElementById('graph-view-button'),
+        questionInput: document.getElementById('question-input'), askButton: document.getElementById('ask-button'), qaAnswer: document.getElementById('qa-answer')
       };
       function setBanner(message = '') { els.banner.textContent = message; }
       function setLoading(active, title = 'Working...', copy = 'Loading the workspace.') {
@@ -317,6 +329,45 @@ export function renderAppHtml(): string {
           state.activeNodeId = nodeId; state.focus = focus; state.lastOutwardTrace = outwardTrace; state.lastInwardTrace = inwardTrace;
           expandFileForActiveNode(); renderNodes(); renderDetail(focus, outwardTrace, inwardTrace);
         } finally { setLoading(false); }
+      }
+
+      async function askQuestion() {
+        if (!state.workspacePath) {
+          setBanner('Open a workspace first.');
+          return;
+        }
+        const question = els.questionInput.value.trim();
+        if (!question) return;
+        els.askButton.disabled = true;
+        setBanner('');
+        try {
+          const { answer } = await request('/api/questions/answer', { method: 'POST', body: JSON.stringify({ folderPath: state.workspacePath, question }) });
+          state.questionAnswer = answer;
+          renderQuestionAnswer(answer);
+        } catch (error) {
+          setBanner(error.message);
+        } finally {
+          els.askButton.disabled = false;
+        }
+      }
+      function renderQuestionAnswer(answer) {
+        if (!answer) {
+          els.qaAnswer.classList.add('hidden');
+          els.qaAnswer.innerHTML = '';
+          return;
+        }
+        const highlights = (answer.highlights || []).map((item) => '<li><strong>' + escapeHtml(item.name) + '</strong> (' + escapeHtml(item.kind) + ') — ' + escapeHtml(shortPath(item.filePath)) + '<div class="qa-meta">' + escapeHtml(item.whyItMatters) + '</div></li>').join('');
+        const steps = (answer.plainEnglishWalkthrough || []).map((line) => '<li>' + escapeHtml(line) + '</li>').join('');
+        const traces = (answer.tracePaths || []).map((trace) => '<li><strong>' + escapeHtml(trace.title) + '</strong><div class="qa-meta">' + escapeHtml((trace.steps || []).map((step) => step.edgeType).join(' → ')) + '</div></li>').join('');
+        const followUps = (answer.followUps || []).map((line) => '<li>' + escapeHtml(line) + '</li>').join('');
+        els.qaAnswer.classList.remove('hidden');
+        els.qaAnswer.innerHTML = '<h3>Answer</h3>'
+          + '<p>' + escapeHtml(answer.directAnswer || '') + '</p>'
+          + '<div class="qa-meta">Question: ' + escapeHtml(answer.question || '') + '</div>'
+          + '<h3 style="margin-top:12px;">Walkthrough</h3><ol>' + steps + '</ol>'
+          + '<h3 style="margin-top:12px;">Key symbols</h3><ul>' + highlights + '</ul>'
+          + '<h3 style="margin-top:12px;">Traces</h3><ul>' + traces + '</ul>'
+          + '<h3 style="margin-top:12px;">Next questions</h3><ul>' + followUps + '</ul>';
       }
       function renderNodes() {
         els.symbolSummary.textContent = state.nodes.length
@@ -730,6 +781,13 @@ export function renderAppHtml(): string {
       els.kindFilter.addEventListener('change', () => { loadNodes().catch((error) => setBanner(error.message)); });
       els.simpleViewButton.addEventListener('click', () => setViewMode('simple'));
       els.graphViewButton.addEventListener('click', () => setViewMode('graph'));
+      els.askButton.addEventListener('click', () => { askQuestion().catch((error) => setBanner(error.message)); });
+      els.questionInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          askQuestion().catch((error) => setBanner(error.message));
+        }
+      });
       els.nodeList.addEventListener('click', (event) => {
         const button = event.target.closest('[data-node-id]');
         if (!button) return;
