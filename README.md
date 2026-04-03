@@ -32,6 +32,7 @@ Then open [http://localhost:4310](http://localhost:4310) in your browser and pas
 - Search symbols by name, id, or file path
 - Filter symbols by kind
 - Inspect symbol identity, explanation, boundaries, risks, related tests, and traces
+- Ask plain-language questions (for example, "Where are the AI instructions?" or "What happens when I save a note?") and get graph-grounded walkthroughs
 
 ## npm Scripts
 
@@ -45,6 +46,7 @@ Then open [http://localhost:4310](http://localhost:4310) in your browser and pas
 2. The app indexes the target folder into a local SQLite-backed graph cache.
 3. Selecting symbols loads focus info, related edges, and inward/outward traces.
 4. Missing explanations are generated and cached for future views.
+5. The Q&A panel ranks relevant symbols using lightweight embeddings (TF-IDF vectors), then returns a plain-English answer plus trace paths through the graph.
 
 ## Troubleshooting
 

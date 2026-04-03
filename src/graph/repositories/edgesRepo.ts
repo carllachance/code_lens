@@ -44,6 +44,14 @@ export class EdgesRepo {
       .map((row) => this.mapEdge(row));
   }
 
+  all(limit = 20000): CodeEdge[] {
+    return (this.graph
+      .raw()
+      .prepare(`${this.selectEdgesSql('')} LIMIT ?`)
+      .all(limit) as Record<string, unknown>[])
+      .map((row) => this.mapEdge(row));
+  }
+
   deleteBySourceFilePath(filePath: string): void {
     this.graph.raw().prepare('DELETE FROM edges WHERE source_file_path = ?').run(filePath);
   }

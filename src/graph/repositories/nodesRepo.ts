@@ -60,6 +60,15 @@ export class NodesRepo {
       .filter((node): node is NodeListItem => Boolean(node));
   }
 
+  all(limit = 5000): CodeNode[] {
+    return (this.graph
+      .raw()
+      .prepare(`${this.selectNodesSql('')} LIMIT ?`)
+      .all(limit) as Record<string, unknown>[])
+      .map((row) => this.mapNode(row))
+      .filter((node): node is CodeNode => Boolean(node));
+  }
+
   count(): number {
     const row = this.graph.raw().prepare('SELECT COUNT(*) AS count FROM nodes').get() as { count: number };
     return row.count;

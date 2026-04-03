@@ -79,6 +79,20 @@ export async function startCodeLensServer(options?: {
         return;
       }
 
+      if (method === 'POST' && pathname === '/api/questions/answer') {
+        const body = await readJsonBody(request);
+        const folderPath = body.folderPath || '';
+        const question = (body.question || '').trim();
+        if (!question) {
+          sendJson(response, 400, { error: 'Question is required.' });
+          return;
+        }
+
+        const answer = workspaceManager.answerQuestion(folderPath, question);
+        sendJson(response, 200, { answer });
+        return;
+      }
+
       if (method === 'GET' && pathname === '/api/nodes') {
         const folderPath = requestUrl.searchParams.get('folderPath') || '';
         const query = requestUrl.searchParams.get('query') || undefined;

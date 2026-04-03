@@ -13,6 +13,7 @@ import { NodesRepo } from '../graph/repositories/nodesRepo';
 import { TracesRepo } from '../graph/repositories/tracesRepo';
 import { getNodeFocus } from '../queries/getNodeFocus';
 import { getTrace } from '../queries/getTrace';
+import { answerWorkspaceQuestion } from '../qa/questionAnswerer';
 
 export type WorkspaceSummary = {
   id: string;
@@ -120,6 +121,13 @@ export class WorkspaceManager {
   getTrace(folderPath: string, nodeId: string, direction: 'inward' | 'outward', maxDepth = 3) {
     const session = this.requireSession(folderPath);
     return getTrace(nodeId, direction, session.traces, { maxDepth });
+  }
+
+  answerQuestion(folderPath: string, question: string) {
+    const session = this.requireSession(folderPath);
+    const nodes = session.nodes.all();
+    const edges = session.edges.all();
+    return answerWorkspaceQuestion(question, nodes, edges);
   }
 
   closeAll(): void {
