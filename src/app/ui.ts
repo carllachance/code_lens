@@ -362,12 +362,12 @@ export function renderAppHtml(): string {
         return map[risk] || risk;
       }
       function shortPath(filePath) {
-        const normalized = String(filePath).replaceAll('\\', '/');
-        const root = state.workspacePath ? String(state.workspacePath).replaceAll('\\', '/') : '';
+        const normalized = String(filePath).replaceAll('\\\\', '/');
+        const root = state.workspacePath ? String(state.workspacePath).replaceAll('\\\\', '/') : '';
         return root && normalized.startsWith(root) ? normalized.slice(root.length + 1) : normalized;
       }
       function fileName(filePath) {
-        const normalized = String(filePath).replaceAll('\\', '/');
+        const normalized = String(filePath).replaceAll('\\\\', '/');
         const parts = normalized.split('/');
         return parts[parts.length - 1] || normalized;
       }
@@ -383,7 +383,7 @@ export function renderAppHtml(): string {
       function readableTarget(value) {
         if (!value) return 'Unknown symbol';
         const text = String(value);
-        if (text.includes('/') || text.includes('\\')) return shortPath(text);
+        if (text.includes('/') || text.includes('\\\\')) return shortPath(text);
         return text;
       }
       function uniqueNames(values) { return [...new Set(values.filter(Boolean))]; }
